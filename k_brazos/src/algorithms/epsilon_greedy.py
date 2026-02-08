@@ -31,6 +31,18 @@ class EpsilonGreedy(Algorithm):
         super().__init__(k)
         self.epsilon = epsilon
 
+        # Esta variable auxiliar indica si estamos haciendo el recorrido inicial
+        # print("="*30)
+        # print(f"INICIALIZANDO EPSILON GREEDY CON EPSILON {epsilon}")
+        # print("="*30)
+        # self.recorrido_inicial = self.epsilon == 0
+        self.recorrido_inicial = True
+
+        # Esta variable es un contador que indica por qué brazo vamos al
+        # realizar el recorrido inicial en caso de que epsilon sea 0. Al
+        # llegar a k, se considera que el recorrido ha terminado
+        self.brazo_recorrido_inicial = 0
+
     def select_arm(self) -> int:
         """
         Selecciona un brazo basado en la política epsilon-greedy.
@@ -38,18 +50,36 @@ class EpsilonGreedy(Algorithm):
         :return: índice del brazo seleccionado.
         """
 
-        # Observa que para para epsilon=0 solo selecciona un brazo y no hace un primer recorrido por todos ellos.
-        # ¿Podrías modificar el código para que funcione correctamente para epsilon=0?
+        if self.recorrido_inicial:
+            # Epsilon es 0 y se está haciendo el recorrido inicial para tener una
+            # recompensa promedio inicial para cada uno
+            chosen_arm = self.brazo_recorrido_inicial
+            self.brazo_recorrido_inicial+=1
+            
+            # Si ya se han recorrido todos los brazos, se termina el recorrido inicial
+            if self.brazo_recorrido_inicial == self.k:
+                self.recorrido_inicial = False
+            
+            # print(f"Se está realizando el recorrido inicial. Brazo {chosen_arm}/{self.k}")
 
-        if np.random.random() < self.epsilon:
+        elif np.random.random() < self.epsilon:
             # Selecciona un brazo al azar
             chosen_arm = np.random.choice(self.k)
+
+            # print(f"Se elige aleatoriamente el brazo {chosen_arm}")
         else:
             # Selecciona el brazo con la recompensa promedio estimada más alta
             chosen_arm = np.argmax(self.values)
 
+            # print(f"Se elige el mejor brazo {chosen_arm}")
+
         return chosen_arm
 
+    def reset(self):
+        """
+        Reinicia el estado del algoritmo.
+        """
+        super().reset()
 
-
-
+        self.recorrido_inicial = True
+        self.brazo_recorrido_inicial = 0
