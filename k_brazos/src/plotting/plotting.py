@@ -18,7 +18,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from algorithms import Algorithm, EpsilonGreedy, EpsilonDecay
+from algorithms import Algorithm, EpsilonGreedy, EpsilonDecay, UCB1
 
 
 def get_algorithm_label(algo: Algorithm) -> str:
@@ -35,6 +35,8 @@ def get_algorithm_label(algo: Algorithm) -> str:
         label += f" (epsilon={algo.epsilon})"
     elif isinstance(algo, EpsilonDecay):
         label += f" (epsilon={algo.epsilon}, epsilon_min={algo.epsilon_min}, lambda={algo.decay_lambda}, tipo={algo.decay_type})"
+    elif isinstance(algo, UCB1):
+        label += f" (c={algo.c})"
     # elif isinstance(algo, OtroAlgoritmo):
     #     label += f" (parametro={algo.parametro})"
     # Añadir más condiciones para otros algoritmos aquí
