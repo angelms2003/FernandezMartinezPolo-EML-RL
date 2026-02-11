@@ -54,7 +54,7 @@ class UCB1(Algorithm):
         else:
             # Término de exploración UCB
             exploration = np.sqrt(
-                (2 * np.log(self.t + 1)) / self.counts
+                (2 * np.log(self.t)) / self.counts
             )
 
             # Valores UCB
