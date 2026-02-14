@@ -31,10 +31,21 @@ class ArmBinomial(Arm):
         return f"ArmBinomial(n={self.n}, p={self.p:.2f})"
 
     @classmethod
-    def generate_arms(cls, k: int, n: int = 10):
+    def generate_arms(cls, k: int, n_min: int = 1, n_max: int = 10):
         """
         Genera k brazos con el mismo n pero probabilidades p aleatorias.
         """
-        arms =
+
+        assert k > 0, "El número de brazos k debe ser mayor que 0."
+        assert n_min < n_max, "El valor de n_min debe ser menor que n_max."
+        
+        # Generar k- valores únicos de p con decimales
+        arms = []
         for _ in range(k):
-            p = np.random.random() # Genera p en = 1 \cdot p = p $$
+            n = np.random.randint(n_min, n_max + 1)
+            n = round(n, 2)
+            p = np.random.rand()
+            p = round(p, 2)
+            arms.append(ArmBinomial(n,p))
+
+        return arms
