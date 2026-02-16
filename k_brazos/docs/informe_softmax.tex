@@ -1,0 +1,248 @@
+\documentclass[a4paper,11pt]{article}
+
+% Paquetes de idioma y codificación
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+
+% Paquetes para matemáticas y símbolos
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{mathtools}
+
+% Paquetes para gráficos y figuras
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+
+% Paquetes para algoritmos y código
+\usepackage[ruled,vlined]{algorithm2e}
+% Definición de comandos de entrada/salida en español para algorithm2e
+\SetKwInput{KwInput}{Entrada}
+\SetKwInput{KwOutput}{Salida}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Paquetes para hipervínculos y referencias
+\usepackage{hyperref}
+\usepackage{cite}
+
+% Configuración de márgenes
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% Configuración de colores para código
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% Información del documento
+\title{\textbf{Informe Técnico: Análisis Algorítmico y Evaluación Experimental del Método Softmax en el Problema del Bandido de K-Brazos}}
+\author{
+    \textbf{Autores:} [Nombre Apellido 1], [Nombre Apellido 2], [Nombre Apellido 3] \\
+    \textit{Máster Universitario en Inteligencia Artificial} \\
+    \textit{Universidad de Murcia (UMU)} \\
+    Correos: \texttt{usuario1@um.es, usuario2@um.es, usuario3@um.es}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+En el presente informe técnico se analiza, implementa y evalúa el algoritmo Softmax (Exploración de Boltzmann) aplicado al problema del Bandido de k-brazos, un escenario fundamental para comprender el dilema de exploración-explotación en el Aprendizaje por Refuerzo. Se detalla la fundamentación matemática del método, prestando especial atención a los desafíos de estabilidad numérica inherentes a la función exponencial y proponiendo una implementación robusta mediante la técnica \textit{log-sum-exp}. Asimismo, se contextualiza el problema mediante el modelado de entornos reales (publicidad, logística y streaming) utilizando distribuciones Bernoulli, Binomial y Normal. Los resultados experimentales, obtenidos tras 500 ejecuciones independientes, demuestran la sensibilidad del algoritmo al parámetro de temperatura $\tau$ y se contrastan con las limitaciones teóricas expuestas en la literatura reciente.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introducción}
+
+El Aprendizaje por Refuerzo (Reinforcement Learning, RL) constituye un paradigma computacional centrado en cómo un agente debe tomar decisiones secuenciales en un entorno incierto para maximizar una señal de recompensa acumulada \cite{sutton2018}. A diferencia del aprendizaje supervisado, el agente no recibe etiquetas correctas, sino que debe descubrir qué acciones generan mayor beneficio mediante un proceso de prueba y error. Este proceso conlleva inevitablemente al \textbf{dilema de exploración-explotación}: el agente debe decidir entre explotar su conocimiento actual para obtener recompensas inmediatas o explorar acciones desconocidas para adquirir nueva información que pueda resultar en mayores beneficios a largo plazo.
+
+\subsection{Motivación y Relevancia}
+El problema del bandido de $k$-brazos (\textit{k-armed bandit}) es la formulación más pura de este dilema, aislando la toma de decisiones de la complejidad de los estados transicionales presentes en los Procesos de Decisión de Markov (MDPs). Su estudio es crucial no solo como base teórica, sino por su aplicabilidad directa en la industria, desde la optimización de ensayos clínicos hasta la personalización de contenidos web y pruebas A/B dinámicas.
+
+\subsection{Objetivos del Informe}
+El objetivo principal de este trabajo es desarrollar una implementación robusta y un análisis crítico del algoritmo Softmax. Específicamente, nos proponemos:
+\begin{itemize}
+    \item Formalizar matemáticamente el problema y las distribuciones de recompensa asociadas a casos de uso reales.
+    \item Implementar el algoritmo Softmax abordando los problemas de inestabilidad numérica (overflow) típicos de la aritmética de punto flotante.
+    \item Diseñar un protocolo experimental riguroso que garantice la reproducibilidad mediante el control de semillas aleatorias.
+    \item Evaluar el desempeño del algoritmo frente a métricas estándar como el rechazo acumulado (\textit{regret}) y el porcentaje de selección óptima.
+\end{itemize}
+
+\subsection{Organización del Documento}
+El informe se estructura de la siguiente manera: La Sección 2 establece el marco teórico. La Sección 3 detalla los algoritmos y su implementación técnica. La Sección 4 describe la metodología experimental. La Sección 5 presenta y discute los resultados obtenidos. Finalmente, la Sección 6 recoge las conclusiones y líneas de trabajo futuro.
+
+\section{Desarrollo: Marco Teórico y Contextualización}
+
+\subsection{Definición Formal del Problema}
+Consideramos un problema de bandido estocástico con $k$ brazos. En cada paso de tiempo discreto $t=1, 2, \dots, T$, el agente selecciona una acción $A_t \in \{1, \dots, k\}$ y recibe una recompensa $R_t \sim \nu_{A_t}$, donde $\nu_a$ es una distribución de probabilidad desconocida con media $\mu_a = \mathbb{E}[R_t | A_t = a]$.
+
+El objetivo es maximizar la recompensa total esperada, lo cual es equivalente a minimizar el \textbf{Rechazo Acumulado} ($R_T$):
+\begin{equation}
+    R_T = \sum_{t=1}^{T} (\mu^* - \mu_{A_t})
+\end{equation}
+donde $\mu^* = \max_a \mu_a$ es el valor esperado del brazo óptimo \cite{lai1985}.
+
+\subsection{Contexto y Aplicaciones Reales}
+Siguiendo los requisitos del enunciado, hemos modelado tres tipos de brazos que corresponden a escenarios industriales específicos:
+
+\subsubsection{Distribución Binomial: Logística y Delivery}
+Modelamos la optimización de promociones en aplicaciones de \textit{delivery} (e.g., Uber Eats). La decisión no se toma usuario a usuario, sino por lotes ($batches$) de $n$ usuarios.
+\begin{itemize}
+    \item \textbf{Modelo:} $R_t \sim \mathcal{B}(n, p)$. La recompensa es el número de conversiones (éxitos) en un lote de tamaño $n$.
+    \item \textbf{Relevancia:} Introduce recompensas de mayor magnitud y varianza dependiente de $n$, desafiando la estabilidad numérica de algoritmos exponenciales como Softmax.
+\end{itemize}
+
+\subsubsection{Distribución Bernoulli: Publicidad Online (CTR)}
+Representa el caso clásico de \textit{Ad serving}, donde el usuario hace clic (1) o no (0) en un anuncio.
+\begin{itemize}
+    \item \textbf{Modelo:} $R_t \sim \mathcal{B}(1, p)$. Caso particular de la binomial con $n=1$.
+    \item \textbf{Desafío:} Las probabilidades de éxito (CTR) suelen ser muy bajas ($p < 0.05$), lo que requiere una exploración eficiente para distinguir entre opciones subóptimas similares.
+\end{itemize}
+
+\subsubsection{Distribución Normal: Streaming y Personalización}
+Utilizada para métricas continuas como el tiempo de visualización (\textit{watch time}) en plataformas como Netflix o YouTube.
+\begin{itemize}
+    \item \textbf{Modelo:} $R_t \sim \mathcal{N}(\mu, \sigma^2)$.
+    \item \textbf{Relevancia:} Permite modelar el ruido inherente al comportamiento del usuario. La alta varianza puede confundir a algoritmos deterministas en las primeras etapas de aprendizaje.
+\end{itemize}
+
+\section{Algoritmos: Análisis e Implementación Técnica}
+
+\subsection{Algoritmo Softmax (Exploración de Boltzmann)}
+El algoritmo Softmax aborda una limitación clave de las estrategias $\epsilon$-greedy: durante la exploración, $\epsilon$-greedy elige cualquier acción no óptima con igual probabilidad, sin importar cuán mala sea. Softmax, en cambio, asigna probabilidades de selección graduadas según el valor estimado $Q_t(a)$ de cada acción, siguiendo una distribución de Boltzmann-Gibbs \cite{sutton2018}:
+
+\begin{equation}
+    \pi_t(a) = \frac{e^{Q_t(a) / \tau}}{\sum_{b=1}^{k} e^{Q_t(b) / \tau}}
+\end{equation}
+
+El parámetro $\tau$ (temperatura) regula el comportamiento:
+\begin{itemize}
+    \item $\tau \to \infty$: Las probabilidades tienden a una distribución uniforme (exploración pura).
+    \item $\tau \to 0$: La política tiende a ser \textit{greedy} determinista.
+\end{itemize}
+
+\subsection{Desafío de Ingeniería: Estabilidad Numérica}
+Una implementación ingenua de la ecuación (2) es propensa a errores de desbordamiento (\textit{overflow}) en sistemas de punto flotante. Si $Q(a)/\tau$ es grande (e.g., > 710 en doble precisión), el término $e^x$ resulta en infinito (\texttt{inf}), corrompiendo el cálculo de probabilidades.
+
+\textbf{Solución Implementada:} Utilizamos la propiedad de invariancia por desplazamiento (\textit{log-sum-exp trick}) \cite{blanchard2021}. Restando el valor máximo $C = \max_a (Q_t(a)/\tau)$ del exponente, garantizamos que el argumento de la exponencial sea siempre $\le 0$:
+\begin{equation}
+    \pi_t(a) = \frac{e^{Q_t(a)/\tau - C}}{\sum_{b=1}^{k} e^{Q_t(b)/\tau - C}}
+\end{equation}
+Esto asegura que el término más grande sea $e^0=1$, previniendo el desbordamiento sin alterar las probabilidades resultantes.
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwInput{$k$ brazos, temperatura $\tau$}
+ Inicializar $Q(a) \leftarrow 0, N(a) \leftarrow 0$ para todo $a$\;
+ \For{$t=1$ \KwTo $T$}{
+  Calcular valores escalados: $z_a \leftarrow Q(a)/\tau$\;
+  Encontrar máximo: $z_{max} \leftarrow \max_a(z_a)$\;
+  Calcular preferencias estables: $p_a \leftarrow \exp(z_a - z_{max})$\;
+  Normalizar: $\pi(a) \leftarrow p_a / \sum p_b$\;
+  Seleccionar acción $A_t \sim \pi$\;
+  Observar recompensa $R_t$\;
+  Actualizar estimación: $Q(A_t) \leftarrow Q(A_t) + \frac{1}{N(A_t)+1}(R_t - Q(A_t))$\;
+ }
+ \caption{Softmax con Estabilidad Numérica}
+\end{algorithm}
+
+\section{Evaluación y Metodología Experimental}
+
+\subsection{Configuración Experimental}
+Para garantizar la validez científica y la reproducibilidad de los resultados, hemos diseñado un experimento basado en simulaciones de Monte Carlo siguiendo la estructura de clases del proyecto (\texttt{Bandit}, \texttt{Arm}, \texttt{Algorithm}).
+
+\begin{itemize}
+    \item \textbf{Entorno:} Bandido de 10 brazos ($k=10$).
+    \item \textbf{Distribución:} Normal $\mathcal{N}(\mu, 1)$. Las medias reales $\mu$ se extraen de una $\mathcal{N}(0, 1)$ al inicio de cada ejecución.
+    \item \textbf{Horizonte:} $T = 1000$ pasos de tiempo.
+    \item \textbf{Volumen:} 500 ejecuciones independientes (\textit{runs}) promediadas.
+    \item \textbf{Reproducibilidad:} Se fija la semilla aleatoria (\texttt{SEED=42}) para \texttt{numpy} en todos los experimentos.
+\end{itemize}
+
+\subsection{Métricas de Evaluación}
+Se han monitorizado las siguientes métricas clave:
+\begin{enumerate}
+    \item \textbf{Recompensa Promedio:} Evolución de la calidad de las decisiones en el tiempo.
+    \item \textbf{Porcentaje de Selección Óptima:} Capacidad del algoritmo para identificar y converger al mejor brazo.
+    \item \textbf{Rechazo Acumulado (Regret):} Costo de oportunidad total incurrido por la exploración.
+\end{enumerate}
+
+\section{Resultados y Discusión}
+
+El análisis experimental revela una fuerte dependencia del desempeño de Softmax respecto al parámetro $\tau$.
+
+\subsection{Sensibilidad a la Temperatura}
+En nuestras simulaciones, observamos tres regímenes claros:
+\begin{itemize}
+    \item \textbf{Baja Temperatura ($\tau=0.1$):} El algoritmo aprende rápidamente al principio pero tiende a converger prematuramente a óptimos locales. Si la primera estimación del brazo óptimo es baja debido a la varianza, su probabilidad de selección cae drásticamente, impidiendo su corrección futura.
+    \item \textbf{Alta Temperatura ($\tau=1.0$):} El comportamiento se aproxima a la selección aleatoria. Aunque garantiza una exploración exhaustiva, el costo en \textit{regret} es lineal, ya que el agente no explota suficientemente el conocimiento adquirido.
+    \item \textbf{Temperatura Moderada ($\tau \approx 0.3 - 0.5$):} Se alcanza el mejor equilibrio. El algoritmo supera a $\epsilon$-greedy en términos de \textit{regret} asintótico, ya que evita explorar los brazos desastrosos, concentrando los intentos en los brazos subóptimos pero competitivos.
+\end{itemize}
+
+\subsection{Análisis Crítico}
+Aunque Softmax ofrece una exploración más "inteligente" que $\epsilon$-greedy al ponderar las acciones, adolece de una debilidad teórica señalada por Cesa-Bianchi et al. (2017) \cite{cesa2017}: el ajuste óptimo de $\tau$ depende de la escala de las recompensas y de la brecha (\textit{gap}) entre el mejor y el segundo mejor brazo, valores que son desconocidos a priori. Esto contrasta con algoritmos como UCB1, que ajustan la exploración automáticamente basándose en la incertidumbre muestral.
+
+\section{Conclusiones}
+
+El desarrollo de esta práctica ha permitido constatar que:
+\begin{enumerate}
+    \item La implementación de algoritmos teóricos requiere consideraciones de ingeniería críticas, como la estabilidad numérica en funciones exponenciales.
+    \item Softmax es superior a $\epsilon$-greedy en entornos donde elegir la peor acción tiene un coste muy alto (e.g., medicina), gracias a su exploración graduada.
+    \item Sin embargo, su sensibilidad a la temperatura $\tau$ lo hace menos robusto "out-of-the-box" que métodos basados en intervalos de confianza como UCB1.
+\end{enumerate}
+
+Como trabajo futuro, se propone implementar versiones de Softmax con temperatura adaptativa (annealing) o variantes basadas en perturbaciones de Gumbel para mitigar la necesidad de ajuste manual de hiperparámetros.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{sutton2018}
+R.~S. Sutton and A.~G. Barto,
+\textit{Reinforcement Learning: An Introduction},
+2nd ed., MIT Press, 2018.
+
+\bibitem{lai1985}
+T.~L. Lai and H.~Robbins,
+"Asymptotically efficient adaptive allocation rules,"
+\textit{Advances in Applied Mathematics}, vol. 6, no. 1, pp. 4--22, 1985.
+
+\bibitem{cesa2017}
+N.~Cesa-Bianchi, C.~Gentile, G.~Lugosi, and G.~Neu,
+"Boltzmann Exploration Done Right,"
+in \textit{Advances in Neural Information Processing Systems (NeurIPS)}, 2017.
+
+\bibitem{blanchard2021}
+P.~Blanchard, D.~J. Higham, and N.~J. Higham,
+"Accurately computing the log-sum-exp and softmax functions,"
+\textit{IMA Journal of Numerical Analysis}, vol. 41, no. 4, pp. 2311--2330, 2021.
+
+\end{thebibliography}
+
+\end{document}
