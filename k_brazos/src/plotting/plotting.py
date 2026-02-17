@@ -120,7 +120,7 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
     plt.show()
 
 
-def plot_arm_performance_summary(arm_stats: List[dict], algorithms: List[Algorithm], 
+def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], 
                                  k_arms: int, best_arm_index: int):
     """
     Visualiza el rendimiento de los brazos mediante una cuadrícula de subplots.
