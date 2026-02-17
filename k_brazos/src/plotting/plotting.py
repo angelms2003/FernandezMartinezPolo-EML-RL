@@ -119,3 +119,58 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
     plt.tight_layout()
     plt.show()
 
+
+def plot_arm_performance_summary(arm_stats: List[dict], algorithms: List[Algorithm], 
+                                 k_arms: int, best_arm_index: int):
+    """
+    Visualiza el rendimiento de los brazos mediante una cuadrícula de subplots.
+    Muestra la recompensa media obtenida y resalta el brazo óptimo.
+
+    :param arm_stats: Estadísticas (recompensa y conteos) por cada algoritmo.
+    :param algorithms: Instancias de los algoritmos para las etiquetas.
+    :param k_arms: Cantidad total de brazos.
+    :param best_arm_index: Índice (0-indexed) del brazo con mayor recompensa teórica.
+    """
+    sns.set_context("paper", font_scale=1.1)
+    
+    n_algos = len(algorithms)
+    n_cols = 2
+    n_rows = (n_algos + 1) // n_cols
+    
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(12, 5 * n_rows), squeeze=False)
+    axes_flat = axes.flatten()
+
+    for i, (algo, stats) in enumerate(zip(algorithms, arm_stats)):
+        curr_ax = axes_flat[i]
+        
+        # Extracción de datos
+        avg_rewards = stats.get('mean_rewards', np.zeros(k_arms))
+        counts = stats.get('selections', np.zeros(k_arms))
+        indices = np.arange(k_arms)
+        
+        # Definición de estética: verde para el óptimo, gris/azul para el resto
+        bar_colors = [sns.color_palette("muted")[2] if j == best_arm_index 
+                      else sns.color_palette("muted")[0] for j in indices]
+
+        # Creación del gráfico de barras
+        bars = curr_ax.bar(indices, avg_rewards, color=bar_colors, 
+                           edgecolor='white', linewidth=1, alpha=0.85)
+        
+        # Configuración de etiquetas de texto en el eje X
+        curr_ax.set_xticks(indices)
+        curr_ax.set_xticklabels([f"B{j+1}\n(n={int(counts[j])})" for j in indices], 
+                                 fontsize=9)
+        
+        # Títulos y nombres de ejes
+        curr_ax.set_title(f"Análisis: {get_algorithm_label(algo)}", fontweight='bold')
+        curr_ax.set_ylabel("Recompensa Media")
+        curr_ax.set_xlabel("Brazo y Frecuencia de Selección")
+        curr_ax.yaxis.grid(True, linestyle=':', alpha=0.6)
+
+    # Limpieza de subplots vacíos en caso de número impar
+    for j in range(i + 1, len(axes_flat)):
+        fig.delaxes(axes_flat[j])
+
+    plt.tight_layout(pad=3.0)
+    plt.show()
+
