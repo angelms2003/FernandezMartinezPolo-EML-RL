@@ -75,7 +75,7 @@ class EpsilonDecay(Algorithm):
             epsilon_t = self.epsilon/(1 + self.decay_lambda*self.t)
         
         # Si el epsilon ha bajado demasiado, se establece en el mínimo
-        epsilon_t = min(self.epsilon_min, epsilon_t)
+        epsilon_t = max(self.epsilon_min, epsilon_t)
 
         if self.recorrido_inicial:
             # Se está haciendo el recorrido inicial para tener una
