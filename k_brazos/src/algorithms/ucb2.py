@@ -71,7 +71,6 @@ class UCB2(Algorithm):
         n_a = np.ceil(self.tau(self.kas))
         
         # Término de exploración utilizando el self.t interno
-        # Se usa (self.t + 1) para evitar log(0) en el primer paso tras inicialización
         exploration = np.sqrt(
             ((1 + self.alpha) * np.log(np.e * self.t/ n_a)) / (2 * n_a)
         )
