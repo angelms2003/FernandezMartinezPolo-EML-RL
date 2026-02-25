@@ -18,8 +18,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from algorithms import Algorithm, EpsilonGreedy, EpsilonDecay, UCB1, UCB2
-from algorithms.softmax import Softmax
+from algorithms import Algorithm, EpsilonGreedy, EpsilonDecay, UCB1, UCB2, Softmax
 
 
 def get_algorithm_label(algo: Algorithm) -> str:
@@ -179,4 +178,3 @@ def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm],
 
     plt.tight_layout(pad=3.0)
     plt.show()
-
