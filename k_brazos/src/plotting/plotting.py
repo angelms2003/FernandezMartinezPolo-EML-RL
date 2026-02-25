@@ -19,6 +19,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from algorithms import Algorithm, EpsilonGreedy, EpsilonDecay, UCB1, UCB2
+from algorithms.softmax import Softmax
 
 
 def get_algorithm_label(algo: Algorithm) -> str:
@@ -39,6 +40,8 @@ def get_algorithm_label(algo: Algorithm) -> str:
         label += f" (c={algo.c})"
     elif isinstance(algo, UCB2):
         label += f" (alpha={algo.alpha})"
+    elif isinstance(algo, Softmax):
+        label += f" (tau={algo.tau})"
     # elif isinstance(algo, OtroAlgoritmo):
     #     label += f" (parametro={algo.parametro})"
     # Añadir más condiciones para otros algoritmos aquí
@@ -62,16 +65,17 @@ def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algor
         label = get_algorithm_label(algo)
         plt.plot(range(steps), rewards[idx], label=label, linewidth=2)
 
-    plt.xlabel('Pasos de Tiempo', fontsize=14)
-    plt.ylabel('Recompensa Promedio', fontsize=14)
-    plt.title('Recompensa Promedio vs Pasos de Tiempo', fontsize=16)
-    plt.legend(title='Algoritmos')
+    plt.xlabel("Pasos de Tiempo", fontsize=14)
+    plt.ylabel("Recompensa Promedio", fontsize=14)
+    plt.title("Recompensa Promedio vs Pasos de Tiempo", fontsize=16)
+    plt.legend(title="Algoritmos")
     plt.tight_layout()
     plt.show()
 
-def plot_regret(steps: int,
-                regret_accumulated: np.ndarray,
-                algorithms: List[Algorithm], *args):
+
+def plot_regret(
+    steps: int, regret_accumulated: np.ndarray, algorithms: List[Algorithm], *args
+):
     """
     Genera la gráfica de Regret Acumulado vs Pasos de Tiempo
 
@@ -87,15 +91,17 @@ def plot_regret(steps: int,
         label = get_algorithm_label(algo)
         plt.plot(range(steps), regret_accumulated[idx], label=label, linewidth=2)
 
-    plt.xlabel('Pasos de Tiempo', fontsize=14)
-    plt.ylabel('Rechazo Acumulado', fontsize=14)
-    plt.title('Rechazo Acumulado vs Pasos de Tiempo', fontsize=16)
-    plt.legend(title='Algoritmos')
+    plt.xlabel("Pasos de Tiempo", fontsize=14)
+    plt.ylabel("Rechazo Acumulado", fontsize=14)
+    plt.title("Rechazo Acumulado vs Pasos de Tiempo", fontsize=16)
+    plt.legend(title="Algoritmos")
     plt.tight_layout()
     plt.show()
 
 
-def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorithms: List[Algorithm]):
+def plot_optimal_selections(
+    steps: int, optimal_selections: np.ndarray, algorithms: List[Algorithm]
+):
     """
     Genera la gráfica de Porcentaje de Selección del Brazo Óptimo vs Pasos de Tiempo.
 
@@ -112,10 +118,10 @@ def plot_optimal_selections(steps: int, optimal_selections: np.ndarray, algorith
         label = get_algorithm_label(algo)
         plt.plot(range(steps), optimal_selections[idx], label=label, linewidth=2)
 
-    plt.xlabel('Pasos de Tiempo', fontsize=14)
-    plt.ylabel('Porcentaje de acción óptima', fontsize=14)
-    plt.title('Porcentaje de acción óptima vs Pasos de Tiempo', fontsize=16)
-    plt.legend(title='Algoritmos')
+    plt.xlabel("Pasos de Tiempo", fontsize=14)
+    plt.ylabel("Porcentaje de acción óptima", fontsize=14)
+    plt.title("Porcentaje de acción óptima vs Pasos de Tiempo", fontsize=16)
+    plt.legend(title="Algoritmos")
     plt.tight_layout()
     plt.show()
 
