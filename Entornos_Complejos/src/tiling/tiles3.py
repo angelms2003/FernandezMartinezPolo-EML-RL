@@ -48,14 +48,14 @@ class IHT:
     def fullp (self):
         return len(self.dictionary) >= self.size
 
-    def getindex (self, obj, readonly=False):
+    def getindex (self, obj, readonly=False, verbose=False):
         d = self.dictionary
         if obj in d: return d[obj]
         elif readonly: return None
         size = self.size
         count = self.count()
         if count >= size:
-            if self.overfullCount==0: print('IHT full, starting to allow collisions')
+            if self.overfullCount==0 and verbose: print('IHT full, starting to allow collisions')
             self.overfullCount += 1
             return basehash(obj) % self.size
         else:
