@@ -1,32 +1,26 @@
 import numpy as np
-from .algorithm import Algorithm
+import math
+
+from algorithms.algorithm import Algorithm
 
 
 class Softmax(Algorithm):
-    def __init__(self, k, tau):
+    def __init__(self, k: int, tau: float = 1):
+        assert 0 < tau, "El parámetro tau debe se mayor que 0."
+
         super().__init__(k)
         self.tau = tau
 
-    def select_arm(self):
-        # Obtener los valores Q actuales
-        q_values = self.values
+    def select_arm(self) -> int:
+        """
+        Selecciona un brazo basado en la política Softmax.
+        :return: índice del brazo seleccionado.
+        """
 
-        # Estabilidad numérica: restar el máximo valor Q antes de exponenciar
-        # Esto previene overflow en np.exp()
-        # z = (Q(a) / tau) - max(Q(a) / tau)
-        tau_scaled_q = q_values / self.tau
-        max_q = np.max(tau_scaled_q)
-        shifted_q = tau_scaled_q - max_q
+        numerador = np.exp(self.values / self.tau)
+        denominador = np.sum(numerador)
+        prob = numerador / denominador
 
-        # Calcular exponenciales
-        exp_values = np.exp(shifted_q)
+        chosen_arm = np.random.choice(self.k, p=prob)
 
-        # Calcular probabilidades (distribución de Boltzmann)
-        probabilities = exp_values / np.sum(exp_values)
-
-        # Selección estocástica basada en las probabilidades calculadas
-        chosen_arm = np.random.choice(range(self.k), p=probabilities)
         return chosen_arm
-
-    def __str__(self):
-        return f"Softmax (tau={self.tau})"
