@@ -49,13 +49,14 @@ def get_algorithm_label(algo: Algorithm) -> str:
     return label
 
 
-def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algorithm]):
+def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algorithm], tipo_distribucion:str=None):
     """
     Genera la gráfica de Recompensa Promedio vs Pasos de Tiempo.
 
     :param steps: Número de pasos de tiempo.
     :param rewards: Matriz de recompensas promedio.
     :param algorithms: Lista de instancias de algoritmos comparados.
+    :param tipo_distribucion: Opcional. String que indica la distribución de brazos usada.
     """
     sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
 
@@ -66,14 +67,17 @@ def plot_average_rewards(steps: int, rewards: np.ndarray, algorithms: List[Algor
 
     plt.xlabel("Pasos de Tiempo", fontsize=14)
     plt.ylabel("Recompensa Promedio", fontsize=14)
-    plt.title("Recompensa Promedio vs Pasos de Tiempo", fontsize=16)
+    title = "Recompensa Promedio vs Pasos de Tiempo"
+    if tipo_distribucion is not None:
+        title += f" ({tipo_distribucion})"
+    plt.title(title, fontsize=16)
     plt.legend(title="Algoritmos")
     plt.tight_layout()
     plt.show()
 
 
 def plot_regret(
-    steps: int, regret_accumulated: np.ndarray, algorithms: List[Algorithm], *args
+    steps: int, regret_accumulated: np.ndarray, algorithms: List[Algorithm], tipo_distribucion:str=None, *args
 ):
     """
     Genera la gráfica de Regret Acumulado vs Pasos de Tiempo
@@ -81,6 +85,7 @@ def plot_regret(
     :param steps: Número de pasos de tiempo.
     :param regret_accumulated: Matriz de regret acumulado (algoritmos x pasos).
     :param algorithms: Lista de instancias de algoritmos comparados.
+    :param tipo_distribucion: Opcional. String que indica la distribución de brazos usada.
     :param args: Opcional. Parámetros que consideres. P.e. la cota teórica Cte * ln(T).
     """
     sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
@@ -92,14 +97,17 @@ def plot_regret(
 
     plt.xlabel("Pasos de Tiempo", fontsize=14)
     plt.ylabel("Rechazo Acumulado", fontsize=14)
-    plt.title("Rechazo Acumulado vs Pasos de Tiempo", fontsize=16)
+    title = "Rechazo Acumulado vs Pasos de Tiempo"
+    if tipo_distribucion is not None:
+        title += f" ({tipo_distribucion})"
+    plt.title(title, fontsize=16)
     plt.legend(title="Algoritmos")
     plt.tight_layout()
     plt.show()
 
 
 def plot_optimal_selections(
-    steps: int, optimal_selections: np.ndarray, algorithms: List[Algorithm]
+    steps: int, optimal_selections: np.ndarray, algorithms: List[Algorithm], tipo_distribucion:str=None
 ):
     """
     Genera la gráfica de Porcentaje de Selección del Brazo Óptimo vs Pasos de Tiempo.
@@ -107,6 +115,7 @@ def plot_optimal_selections(
     :param steps: Número de pasos de tiempo.
     :param optimal_selections: Matriz de porcentaje de selecciones óptimas.
     :param algorithms: Lista de instancias de algoritmos comparados.
+    :param tipo_distribucion: Opcional. String que indica la distribución de brazos usada.
     """
     sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
 
@@ -119,14 +128,18 @@ def plot_optimal_selections(
 
     plt.xlabel("Pasos de Tiempo", fontsize=14)
     plt.ylabel("Porcentaje de acción óptima", fontsize=14)
-    plt.title("Porcentaje de acción óptima vs Pasos de Tiempo", fontsize=16)
+    title = "Porcentaje de acción óptima vs Pasos de Tiempo"
+    if tipo_distribucion is not None:
+        title += f" ({tipo_distribucion})"
+    plt.title(title, fontsize=16)
     plt.legend(title="Algoritmos")
     plt.tight_layout()
     plt.show()
 
 
 def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm], 
-                                 k_arms: int, best_arm_index: int):
+                        k_arms: int, best_arm_index: int,
+                        tipo_distribucion:str=None):
     """
     Visualiza el rendimiento de los brazos mediante una cuadrícula de subplots.
     Muestra la recompensa media obtenida y resalta el brazo óptimo.
@@ -135,6 +148,7 @@ def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm],
     :param algorithms: Instancias de los algoritmos para las etiquetas.
     :param k_arms: Cantidad total de brazos.
     :param best_arm_index: Índice (0-indexed) del brazo con mayor recompensa teórica.
+    :param tipo_distribucion: Opcional. String que indica la distribución de brazos usada.
     """
     sns.set_context("paper", font_scale=1.1)
     
@@ -167,7 +181,10 @@ def plot_arm_statistics(arm_stats: List[dict], algorithms: List[Algorithm],
                                  fontsize=9)
         
         # Títulos y nombres de ejes
-        curr_ax.set_title(f"Análisis: {get_algorithm_label(algo)}", fontweight='bold')
+        title = f"Análisis: {get_algorithm_label(algo)}"
+        if tipo_distribucion is not None:
+            title += f"\n({tipo_distribucion})"
+        curr_ax.set_title(title, fontweight='bold')
         curr_ax.set_ylabel("Recompensa Media")
         curr_ax.set_xlabel("Brazo y Frecuencia de Selección")
         curr_ax.yaxis.grid(True, linestyle=':', alpha=0.6)
