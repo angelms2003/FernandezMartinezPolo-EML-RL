@@ -1,4 +1,4 @@
-# Título del Trabajo
+# Práctica 1: Aprendizaje por refuerzo
 
 ## Información
 - **Alumnos:** Fernández, David; Martínez, Ángel; Polo, Javier
