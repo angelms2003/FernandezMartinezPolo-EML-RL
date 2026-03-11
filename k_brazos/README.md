@@ -1,4 +1,4 @@
-# Título del Trabajo
+# Estudio del problema de k-bandidos
 
 ## Información
 - **Alumnos:** Fernández, David; Martínez, Ángel; Polo, Javier
@@ -7,13 +7,9 @@
 - **Grupo:** FernandezMartinezPolo-EML-RL
 
 ## Descripción
-[Breve descripción del trabajo y sus objetivos]
+En este directorio presentamos todo lo necesario para replicar nuestros experimentos con el problema de k-bandidos. Incluimos desde los notebook con nuestro trabajo hasta el código fuente que usan estos para realizar los experimentos.
 
 ## Estructura
-[Explicación de la organización del repositorio]
+En el directorio raiz se encuentran los notebooks con los diferentes experimentos realizados, además de un notebook main que contiene enlaces a todos los notebooks. 
 
-## Instalación y Uso
-[Instrucciones si son necesarias]
-
-## Tecnologías Utilizadas
-[Lista de lenguajes, frameworks, etc.]
+En el directorio src se encuentra el código python necesario para implementar nuestros experimentos (algoritmos, distribuciones etc).
